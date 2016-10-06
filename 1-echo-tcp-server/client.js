@@ -1,6 +1,6 @@
 const net = require('net')
 
-const client = net.connect({port: 3000}, () => {
+const client = net.connect(3000, () => {
   console.log('connected to the server!')
 })
 
