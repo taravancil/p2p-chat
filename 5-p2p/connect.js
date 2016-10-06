@@ -1,4 +1,4 @@
-'use strict'
+g'use strict'
 const topology = require('fully-connected-topology')
 
 const me = process.argv[2]
