@@ -13,7 +13,7 @@ let socket = net.connect(3000, networkNickname, () => {
 socket = jsonStream(socket)
 
 socket.on('data', (data) => {
-  process.stdout.write(`${data['nickname']}: ${data.message}`)
+  process.stdout.write(`${data.nickname}: ${data.message}`)
 })
 
 process.stdin.on('data', (data) => {
