@@ -8,6 +8,6 @@ const peers = process.argv.slice(3)
 
 const swarm = topology(me, peers)
 
-t.on('connection', (connection, peer) => {
+swarm.on('connection', (connection, peer) => {
   console.log(`new connection from ${peer}`)
 })
