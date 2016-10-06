@@ -26,7 +26,7 @@ const broadcast = (data, sender) => {
   activeSockets.forEach((client) => {
     if (client === sender) return
 
-    client.write({ nickname: data.nickname, message: data.message})
+    client.write({nickname: data.nickname, message: data.message})
   })
 }
 
