@@ -1,3 +1,4 @@
+'use strict'
 const net = require('net')
 const streamSet = require('stream-set')
 
