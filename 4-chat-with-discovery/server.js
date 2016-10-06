@@ -4,7 +4,8 @@ const net = require('net')
 const register = require('register-multicast-dns')
 const streamSet = require('stream-set')
 
-register('test.local')
+const networkNickname = 'test.local'
+register(networkNickname)
 
 const activeSockets = streamSet()
 
@@ -35,5 +36,5 @@ const showActiveConnections = () => {
 }
 
 server.listen(3000, () => {
-  console.log('server listening on port 3000')
+  console.log(`server listening on port 3000 - network: ${networkNickname}`)
 })
