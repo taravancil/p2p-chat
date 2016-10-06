@@ -1,16 +1,13 @@
 const net = require('net')
 
-const client = net.connect(3000, () => {
+const socket = net.connect(3000, () => {
   console.log('connected to the server!')
 })
 
-client.on('data', (data) => {
-  console.log(data.toString().trim())
+socket.on('data', (data) => {
+  process.stdout.write(data)
 })
 
-process.stdin.on('readable', () => {
-  const chunk = process.stdin.read()
-  if (chunk !== null) {
-    client.write(chunk)
-  }
+process.stdin.on('data', (data) => {
+  socket.write(data)
 })
