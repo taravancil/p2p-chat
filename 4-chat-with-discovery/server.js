@@ -15,6 +15,7 @@ const server = net.createServer((socket) => {
   showActiveConnections()
 
   socket.on('end', () => {
+    activeSockets.remove(socket)
     showActiveConnections()
   })
 
