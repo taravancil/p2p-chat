@@ -1,11 +1,12 @@
 'use strict'
+require('lookup-multicast-dns/global')
 const jsonStream = require('duplex-json-stream')
-const lookup = require('lookup-multicast-dns/global')
 const net = require('net')
 
 const nickname = process.argv[2]
+const networkNickname = process.argv[3]
 
-let socket = net.connect(3000, () => {
+let socket = net.connect(3000, networkNickname, () => {
   console.log(`connected to the server!`)
 })
 
