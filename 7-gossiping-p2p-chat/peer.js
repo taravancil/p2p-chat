@@ -3,43 +3,66 @@ const jsonStream = require('duplex-json-stream')
 const streamSet = require('stream-set')
 const topology = require('fully-connected-topology')
 
+// get arguments
 const nickname = process.argv[2]
-const me = process.argv[3]
+const myAddress = process.argv[3]
 const peerAddresses = process.argv.slice(4)
 
-const swarm = topology(me, peerAddresses)
-const activePeers = streamSet()
+// set up swarm and connections
+const swarm = topology(myAddress, peerAddresses)
+const connections = streamSet()
 
-// The index of the last message the peer has seen and forwarded to
-// its peers
-let lastMessageSeen = 0
+const mySessionId = Math.random()
 
-swarm.on('connection', (connection, peer) => {
-  activePeers.add(connection)
-  console.log(`new connection from ${peer}`)
+// the index of the last message sent
+let lastSent = 0
 
+// keys are peers' session ID's, map to the index of the last message
+// received from that session ID
+let messagesSeen = {}
+
+swarm.on('connection', (connection, address) => {
+  console.log(`new connection from ${address}`)
+
+  connection.setMaxListeners(Infinity) // YOLO
+
+  connections.add(connection)
   connection = jsonStream(connection)
+
   connection.on('data', (data) => {
-    // If the message ID > lastMessageSeen
-    // Increment the index and forward to all peers
-    // Else ignore the message
-    if (m)
+    // if we haven't seen this session ID, add it to sessions
+    if (messagesSeen[data.sessionId] === 'undefined') {
+      messagesSeen[data.sessionId] = 0
+    }
+
+    // if we've already seen this message or it's a replay of one of our
+    // messages, ignore it
+    if (data.idx <= messagesSeen[data.sessionId] ||
+        data.sessionId === mySessionId) return
+
+    // update messagesSeen and forward message to all connected peers
+    messagesSeen[data.sessionId] = data.idx
+    broadcast(data.message, data.nickname, data.sessionId, data.idx)
+
+    // display the message
     console.log(`${data.nickname}: ${data.message}`)
   })
 })
 
-const broadcast = (message) => {
-  swarm.connections.forEach((connection) => {
-    const message = message.toString().trim()
-
+const broadcast = (message, nickname, sessionId, idx) => {
+  connections.forEach((connection) => {
     connection = jsonStream(connection)
+
     connection.write({
       nickname: nickname,
-      message: message
+      sessionId: sessionId,
+      message: message.toString().trim(),
+      idx: idx
     })
   })
 }
 
 process.stdin.on('data', (data) => {
-  broadcast(data)
+  lastSent += 1
+  broadcast(data, nickname, mySessionId, lastSent)
 })
