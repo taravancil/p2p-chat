@@ -1,6 +1,5 @@
 'use strict'
 const jsonStream = require('duplex-json-stream')
-const streamSet = require('stream-set')
 const topology = require('fully-connected-topology')
 
 // get arguments
@@ -10,7 +9,6 @@ const peerAddresses = process.argv.slice(4)
 
 // set up swarm and connections
 const swarm = topology(myAddress, peerAddresses)
-const connections = streamSet()
 
 const mySessionId = Math.random()
 
@@ -25,8 +23,6 @@ swarm.on('connection', (connection, address) => {
   console.log(`new connection from ${address}`)
 
   connection.setMaxListeners(Infinity) // YOLO
-
-  connections.add(connection)
   connection = jsonStream(connection)
 
   connection.on('data', (data) => {
@@ -50,7 +46,7 @@ swarm.on('connection', (connection, address) => {
 })
 
 const broadcast = (message, nickname, sessionId, idx) => {
-  connections.forEach((connection) => {
+  swarm.connections.forEach((connection) => {
     connection = jsonStream(connection)
 
     connection.write({
