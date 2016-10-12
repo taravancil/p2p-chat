@@ -16,7 +16,7 @@ Run
 
 `node peer.js your-name localhost:3000 localhost:3001`
 
-`node peer.js friend-1 localhost:3001 localhost:3000`
+`node peer.js friend-1 localhost:3001 localhost:3002`
 
 `node peer.js friend-2 localhost:3002`
 
