@@ -1,18 +1,25 @@
 'use strict'
 const hashToPort = require('hash-to-port')
 const jsonStream = require('duplex-json-stream')
-const lookup = require('lookup-multicast-dns')
 const register = require('register-multicast-dns')
 const streamSet = require('stream-set')
 const topology = require('fully-connected-topology')
 
+const toAddress = (nickname) => `${nickname}.local`
+
 // get arguments
 const nickname = process.argv[2]
-const myAddress = process.argv[3]
-const peerAddresses = process.argv.slice(4)
+const myAddress = toAddress(nickname)
+const peerNicknames = process.argv.slice(3)
+const peerAddresses = peerNicknames.map(n => toAddress(n))
+const peerIps = peerAddresses.map(addr => `localhost:${hashToPort(addr)}`)
+const myIp = `localhost:${hashToPort(myAddress)}`
+
+// register multicast .local domain
+register(myAddress)
 
 // set up swarm and connections
-const swarm = topology(myAddress, peerAddresses)
+const swarm = topology(myIp, peerIps)
 const connections = streamSet()
 
 const mySessionId = Math.random()
@@ -24,13 +31,22 @@ let lastSent = 0
 // received from that session ID
 let messagesSeen = {}
 
+const broadcast = (message, nickname, sessionId, idx) => {
+  connections.forEach((connection) => {
+    connection.write({
+      nickname: nickname,
+      sessionId: sessionId,
+      message: message.toString().trim(),
+      idx: idx
+    })
+  })
+}
+
 swarm.on('connection', (connection, address) => {
   console.log(`new connection from ${address}`)
 
-  connection.setMaxListeners(Infinity) // YOLO
-
-  connections.add(connection)
   connection = jsonStream(connection)
+  connections.add(connection)
 
   connection.on('data', (data) => {
     // if we haven't seen this session ID, add it to sessions
@@ -51,21 +67,6 @@ swarm.on('connection', (connection, address) => {
     console.log(`${data.nickname}: ${data.message}`)
   })
 })
-
-const broadcast = (message, nickname, sessionId, idx) => {
-  connections.forEach((connection) => {
-    connection = jsonStream(connection)
-
-    connection.write({
-      nickname: nickname,
-      sessionId: sessionId,
-      message: message.toString().trim(),
-      idx: idx
-    })
-  })
-}
-
-const toAddress = (nickname) => `${nickname}.local:${hashToPort(nickname)}`
 
 process.stdin.on('data', (data) => {
   lastSent += 1
